@@ -5,3 +5,9 @@ body {
 h2 {
     color:white;
 }
+
+
+.my_class(){
+    color:red;
+    font-size:$0px;
+}

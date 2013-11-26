@@ -1,11 +1,18 @@
 /* funcss.js by gogoprog @ gmail . com */
 
+var _funcssClasses = {};
+
 function funcssLoad(file)
 {
-    console.log("funcssLoad");
-
     $.get(file, function(data) {
             _funcssParse(data);
+
+            for(var key in _funcssClasses)
+            {
+                console.log(key + " = " + _funcssClasses[key]);
+            }
+
+            _funcssIterate();
         });
 }
 
@@ -20,27 +27,22 @@ function _funcssInjectCss(content)
 
 function _isAlphaNumeric(c)
 {
-    return /^[a-z0-9]+$/i.test(c);
+    return /^[a-z0-9\\_]+$/i.test(c);
 }
 
-function _funcssIterate(node)
+function _funcssIterate()
 {
-    var children = node.childNodes;
+    var all = document.getElementsByTagName("*");
 
-    _funcssProcess(node);
-
-    for(i=0;i<children.length; i++)
+    for (var i=0, max=all.length; i < max; i++)
     {
-        if(children[i].nodeType == 1)
-        {
-            _funcssIterate(children[i]);
-        }
+        _funcssProcess(all[i]);
     }
 }
 
 function _funcssParse(content)
 {
-    _funcssInjectCss(content);
+    //_funcssInjectCss(content);
 
     var len = content.length;
 
@@ -53,6 +55,7 @@ function _funcssParse(content)
 
     var current_id = "";
     var current_def = "";
+    var current_is_func = false;
 
     for(var i=0; i<len; i++)
     {
@@ -66,9 +69,14 @@ function _funcssParse(content)
                 {
                     case '{':
                     {
-                        console.log("Identifier : '" + current_id + "'");
                         state = STATE.DEFINITION;
                         current_def = "";
+                    }
+                    break;
+
+                    case '(':
+                    {
+                        current_is_func = true;
                     }
                     break;
 
@@ -90,7 +98,19 @@ function _funcssParse(content)
                 {
                     case '}':
                     {
+                        //current_def += "}";
+
+                        if(current_is_func)
+                        {
+                            _funcssClasses[current_id] = current_def;
+                        }
+                        else
+                        {
+                            // :todo: handle non-func classes.
+                        }
+
                         current_id = "";
+                        current_is_func = "";
                         state = STATE.IDENTIFIER;
                     }
                     break;
@@ -109,9 +129,44 @@ function _funcssParse(content)
 
 function _funcssProcess(element)
 {
-    console.log(element.tagName + " : " + element.className)
+    var p = element.className.indexOf("(");
+
+    if(p !== -1)
+    {
+        var shortname = element.className.substring(0,p);
+
+        var args = element.className.substring(p + 1);
+        args = args.slice(0, -1);
+        args = args.split(/\b\s+/);
+
+        for(var i = args.length - 1; i >= 0; i--) {
+            if(args[i] === "") {
+               args.splice(i, 1);
+            }
+        }
+
+        _funcssApply(element, shortname, args);
+    }
 }
 
-$(function() {
-    _funcssIterate(document.getElementsByTagName("body")[0]);
-});
+function _funcssApply(element, funclass, args)
+{
+    console.log("Applying '" + funclass + "'on " + element.tagName);
+    console.log(args);
+
+    if(args.length == 0)
+    {
+        element.setAttribute("style", _funcssClasses[funclass]);
+    }
+    else
+    {
+        var def = _funcssClasses[funclass];
+
+        for(var i=0; i<args.length; ++i)
+        {
+            def = def.replace("$" + i, args[i]);
+        }
+
+        element.setAttribute("style", def);
+    }
+}
