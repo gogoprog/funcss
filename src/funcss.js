@@ -20,7 +20,7 @@ function _funcssInjectCss(content)
 
 function _isAlphaNumeric(c)
 {
-    return /^a-zA-Z0-9]/.test(c);
+    return /^[a-z0-9]+$/i.test(c);
 }
 
 function _funcssIterate(node)
@@ -44,8 +44,66 @@ function _funcssParse(content)
 
     var len = content.length;
 
-    for(var i=0; i<len; i++) {
-        
+    var STATE = {
+        IDENTIFIER: 1,
+        DEFINITION: 2,
+    }
+
+    var state = STATE.IDENTIFIER;
+
+    var current_id = "";
+    var current_def = "";
+
+    for(var i=0; i<len; i++)
+    {
+        var c = content[i];
+
+        switch(state)
+        {
+            case STATE.IDENTIFIER:
+            {
+                switch(c)
+                {
+                    case '{':
+                    {
+                        console.log("Identifier : " + current_id);
+                        state = STATE.DEFINITION;
+                        current_def = "";
+                    }
+                    break;
+
+                    default:
+                    {
+                        if(_isAlphaNumeric(c))
+                        {
+                            current_id += c;
+                        }
+                    }
+                    break;
+                }
+            }
+            break;
+
+            case STATE.DEFINITION:
+            {
+                switch(c)
+                {
+                    case '}':
+                    {
+                        current_id = "";
+                        state = STATE.IDENTIFIER;
+                    }
+                    break;
+
+                    default:
+                    {
+                        current_def += c;
+                    }
+                    break;
+                }
+            }
+            break;
+        }
     }
 }
 
