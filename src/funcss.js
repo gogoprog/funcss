@@ -66,7 +66,7 @@ function _funcssParse(content)
                 {
                     case '{':
                     {
-                        console.log("Identifier : " + current_id);
+                        console.log("Identifier : '" + current_id + "'");
                         state = STATE.DEFINITION;
                         current_def = "";
                     }
