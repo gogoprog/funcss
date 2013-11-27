@@ -6,12 +6,6 @@ function funcssLoad(file)
 {
     $.get(file, function(data) {
             _funcssParse(data);
-
-            for(var key in _funcssClasses)
-            {
-                console.log(key + " = " + _funcssClasses[key]);
-            }
-
             _funcssIterate();
         });
 }
@@ -42,19 +36,19 @@ function _funcssIterate()
 
 function _funcssParse(content)
 {
-    //_funcssInjectCss(content);
-
     var len = content.length;
 
     var STATE = {
         IDENTIFIER: 1,
         DEFINITION: 2,
+        PARAMETERS: 3
     }
 
     var state = STATE.IDENTIFIER;
 
     var current_id = "";
     var current_def = "";
+    var current_params = "";
     var current_is_func = false;
 
     for(var i=0; i<len; i++)
@@ -77,6 +71,8 @@ function _funcssParse(content)
                     case '(':
                     {
                         current_is_func = true;
+                        current_params = "(";
+                        state = STATE.PARAMETERS;
                     }
                     break;
 
@@ -92,17 +88,48 @@ function _funcssParse(content)
             }
             break;
 
+            case STATE.PARAMETERS:
+            {
+                switch(c)
+                {
+                    case ')':
+                    {
+                        current_params += c;
+                    }
+                    break;
+
+                    case '{':
+                    {
+                        state = STATE.DEFINITION;
+                        current_def = "";
+                    }
+                    break;
+
+                    default:
+                    {
+                        if(_funcssIsAlphaNumeric(c) || c == "," || c == "$")
+                        {
+                            current_params += c;
+                        }
+                    }
+                    break;
+                }
+            }
+            break;
+
             case STATE.DEFINITION:
             {
                 switch(c)
                 {
                     case '}':
                     {
-                        //current_def += "}";
-
                         if(current_is_func)
                         {
-                            _funcssClasses[current_id] = current_def;
+                            var args = _funcssParseArgs(current_params);
+                            _funcssClasses[current_id] = {
+                                    params : args,
+                                    def : current_def
+                                }
                         }
                         else
                         {
@@ -130,7 +157,7 @@ function _funcssParse(content)
 function _funcssParseArgs(str)
 {
     var args = str.slice(1, -1);
-    args = args.split(/\b\s+/);
+    args = args.split(/\b,+/);
 
     for(var i = args.length - 1; i >= 0; i--) {
         if(args[i] === "") {
@@ -157,20 +184,19 @@ function _funcssProcess(element)
 
 function _funcssApply(element, funclass, args)
 {
-    console.log("Applying '" + funclass + "'on " + element.tagName);
-    console.log(args);
-
     if(args.length == 0)
     {
-        element.setAttribute("style", _funcssClasses[funclass]);
+        element.setAttribute("style", _funcssClasses[funclass].def);
     }
     else
     {
-        var def = _funcssClasses[funclass];
+        var def = _funcssClasses[funclass].def;
+        var params = _funcssClasses[funclass].params;
 
         for(var i=0; i<args.length; ++i)
         {
-            def = def.replace("$" + i, args[i]);
+            console.log(params[i]);
+            def = def.replace(params[i], args[i]);
         }
 
         element.setAttribute("style", def);

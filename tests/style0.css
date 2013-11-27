@@ -6,8 +6,10 @@ h2 {
     color:white;
 }
 
-
-.my_class(){
+.my_class($a){
     color:red;
-    font-size:$0px;
+    font-size:$apx;
+}
+.other_class($a,$b) {
+    font-size: calc($a * $bpx);
 }
