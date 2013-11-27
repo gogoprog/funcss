@@ -25,7 +25,7 @@ function _funcssInjectCss(content)
     document.getElementsByTagName("head")[0].appendChild(el);
 }
 
-function _isAlphaNumeric(c)
+function _funcssIsAlphaNumeric(c)
 {
     return /^[a-z0-9\\_]+$/i.test(c);
 }
@@ -82,7 +82,7 @@ function _funcssParse(content)
 
                     default:
                     {
-                        if(_isAlphaNumeric(c))
+                        if(_funcssIsAlphaNumeric(c))
                         {
                             current_id += c;
                         }
@@ -127,6 +127,20 @@ function _funcssParse(content)
     }
 }
 
+function _funcssParseArgs(str)
+{
+    var args = str.slice(1, -1);
+    args = args.split(/\b\s+/);
+
+    for(var i = args.length - 1; i >= 0; i--) {
+        if(args[i] === "") {
+           args.splice(i, 1);
+        }
+    }
+
+    return args;
+}
+
 function _funcssProcess(element)
 {
     var p = element.className.indexOf("(");
@@ -135,15 +149,7 @@ function _funcssProcess(element)
     {
         var shortname = element.className.substring(0,p);
 
-        var args = element.className.substring(p + 1);
-        args = args.slice(0, -1);
-        args = args.split(/\b\s+/);
-
-        for(var i = args.length - 1; i >= 0; i--) {
-            if(args[i] === "") {
-               args.splice(i, 1);
-            }
-        }
+        var args = _funcssParseArgs(element.className.substring(p));
 
         _funcssApply(element, shortname, args);
     }
